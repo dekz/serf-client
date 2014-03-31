@@ -25,8 +25,8 @@ Or install it yourself as:
     client = Serf::Client.connect address: '127.0.0.1', port: 7373
     
     # Listen for stream events
-    client.stream 'user:deploy' do |response|
-      puts response
+    client.stream 'user:deploy' do |resp|
+      puts "USER:: #{resp.body}"
     end
     
     # Trigger a new user-event in Serf asynchronously
@@ -35,8 +35,20 @@ Or install it yourself as:
     # Block till your async is performed
     client.event('deploy').value
     
-    # Block until members are returned
-    client.members.value
+    # This monitors absolutely everything
+    client.monitor do |resp|
+      puts "===> #{resp}"
+    end
+
+    # Listen to anything, respond with a message to all queries
+    client.stream '*' do |resp|
+      # Not everything returned by '*' has a body
+      if body = resp.body
+        puts "*** #{body}"
+        v = body['ID']
+        client.respond v, 'Response from serf-client' if v
+      end
+    end
 
 ```
 
